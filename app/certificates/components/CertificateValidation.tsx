@@ -1,18 +1,44 @@
 "use client";
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { formatInstitution, formatDocument } from '@/utils/mask';
 
-const CertificateValidation = () => {
+interface CertificateValidationProps {
+    onSearch?: (institution: string, document: string) => void;
+    error?: string | null;
+}
+
+const CertificateValidation = ({ onSearch, error }: CertificateValidationProps) => {
     const [institution, setInstitution] = useState("");
     const [document, setDocument] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [localError, setLocalError] = useState<string | null>(null);
 
     const handleInstitutionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInstitution(formatInstitution(e.target.value));
+        if (localError) setLocalError(null);
     };
 
     const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setDocument(formatDocument(e.target.value));
+        if (localError) setLocalError(null);
+    };
+
+    const handleSearch = async () => {
+        if (!institution || !document) {
+            setLocalError("Por favor, preencha todos os campos.");
+            return;
+        }
+
+        setIsLoading(true);
+        setLocalError(null);
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setIsLoading(false);
+
+        if (onSearch) {
+            onSearch(institution, document);
+        }
     };
 
     return (
@@ -67,11 +93,24 @@ const CertificateValidation = () => {
                         </div>
 
                         {/* Button */}
-                        <button className="bg-[#0065D1] hover:bg-[#0065D1] text-white text-[15px] py-3 px-6 rounded-[7px] flex items-center gap-2 transition-colors h-[38px] cursor-pointer shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap">
-                            <Search size={18} />
-                            Pesquisar
+                        <button
+                            onClick={handleSearch}
+                            disabled={isLoading}
+                            className="bg-[#0065D1] hover:bg-[#0065D1] text-white text-[15px] py-3 px-6 rounded-[7px] flex items-center gap-2 transition-colors h-[38px] cursor-pointer shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? (
+                                <Loader2 size={18} className="animate-spin" />
+                            ) : (
+                                <Search size={18} />
+                            )}
+                            {isLoading ? "Pesquisando..." : "Pesquisar"}
                         </button>
                     </div>
+                    {(localError || error) && (
+                        <p className="text-red-500 text-sm font-normal text-center absolute bottom-2 left-0 w-full">
+                            {localError || error}
+                        </p>
+                    )}
                 </div>
             </div>
         </section>
